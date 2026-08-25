@@ -1,0 +1,32 @@
+{
+  "summary": "Tested Minute backend (FastAPI LLM proxy + Node bridge) and the React control dashboard against the public preview URL. 6/6 pytest backend tests pass: /api/health (ok/model claude-sonnet-4-6/llm_configured), /api/llm/complete (real Claude Sonnet 4.6 via Emergent key returned 'PONG', system-prompt variant, 422 validation), /api/minute/overview (up, githubConfigured, surfaces.discord true, playground llmwatermarking -> Aditya-Sarna/llmwatermarking with allowPaths incl. frontend/src/), /api/minute/runs (runs array, no bridge error). Dashboard renders fully: brand 'minute', status pills (Service live, LLM claude-sonnet-4-6, GitHub on, Discord on, Slack off as expected), Loop stepper (6 steps), Playgrounds card with repo link, People & rails, Runs card (empty state). Live polling confirmed (3 /api calls per 5s cycle). No console errors, no error banners. Discord slash-command / GitHub PR flows were NOT tested per instruction.",
+  "backend_issues": {"critical": [], "minor": [
+    {"endpoint": "/api/minute/overview, /api/minute/runs", "issue": "Bridge failures are swallowed and returned as HTTP 200 with {up:false,error} / {runs:[],error}; a 502/503 would be more correct for monitoring."}
+  ]},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "App.js PeopleRow", "issue": "'Requesters' row renders overview.admins.discordUserIds (copy/paste bug) — the Node /internal/overview payload does not expose cfg.requesters at all, so requester allowlist is misreported as the admin list.", "selector": "[data-testid=\"people-card\"]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard", "issues": ["Playgrounds card has a large empty bottom area (height matched to People card) — looks unbalanced on 1920px width", "Pill labels (SERVICE/GITHUB/DISCORD) are low-contrast dim grey on near-black; readable but below AA for small caps text"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix 'Requesters' row in /app/frontend/src/App.js to use a requesters field, and expose cfg.requesters in /internal/overview (src/index.ts)",
+    "Optional: return non-200 from /api/minute/* when the Node bridge is unreachable"
+  ],
+  "critical_code_review_comments": [
+    "/app/backend/server.py is clean and env-driven; no hardcoded URLs, MONGO not used (no persistence needed) — OK.",
+    "src/protocol.ts (336 lines) and other modules are all <700 lines — OK.",
+    "Frontend dashboard has no loading skeleton: before first fetch resolves, pills render as 'down/—' which can momentarily look like an outage."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100%", "frontend": "95%"},
+  "seed_data_creation": "none",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite at /app/backend/tests/backend_test.py (pytest, uses REACT_APP_BACKEND_URL). Discord/GitHub write flows intentionally untested. Node service on 8787 exposes /internal/overview and /internal/runs.",
+  "rca_of_the_issue": "Requesters bug: App.js line 170 passes overview?.admins?.discordUserIds to the Requesters PeopleRow; the backend overview object has only 'admins' and 'tech' keys, so no requester data reaches the UI."
+}
