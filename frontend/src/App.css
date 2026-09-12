@@ -159,6 +159,24 @@
 .empty { color: var(--muted); font-size: 13.5px; padding: 8px 0; }
 .empty code { color: var(--acid); background: var(--panel-2); padding: 2px 7px; border-radius: 5px; font-size: 12px; }
 
+.radio { display: flex; flex-direction: column; }
+.radio-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.radio-row:last-child { border-bottom: 0; }
+.radio-who { font-size: 13px; font-weight: 600; }
+.radio-line { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.radio-time { font-size: 12px; font-family: "JetBrains Mono", monospace; }
+@media (max-width: 640px) {
+  .radio-row { grid-template-columns: auto 1fr; }
+  .radio-time { display: none; }
+}
+
 .foot {
   margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line);
   color: var(--muted); font-size: 12px; font-family: "JetBrains Mono", monospace;

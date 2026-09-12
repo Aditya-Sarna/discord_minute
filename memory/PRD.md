@@ -2,20 +2,20 @@
 
 ## Original problem statement
 Clone `github.com/Aditya-Sarna/minute` and make it production-grade, integrating LLM keys.
-Minute is a Slack/Discord plugin: a non-technical person types a plain request in chat
+Minute is a Discord plugin: a non-technical person types a plain request in chat
 (e.g. `/minute change the main page color to green`); the backend fetches the repo, makes
 the smallest PR, screenshots the running change, replies in the same thread; the user iterates
 by replying; on "Looks good" tech is pinged to review the PR; tech approves/merges — the user
 never leaves chat.
 
 ## User choices
-- Chat surface first: **Discord** (Slack code retained and configurable)
+- Chat surface first: **Discord**
 - LLM: **Claude Sonnet 4.6**
 - Preview: **live screenshot of the running app**
 - Approval: **merge on tech approval** (via GitHub PR review/merge)
 
 ## Architecture (as deployed here)
-- **/app/minute** — the original Node/TypeScript product (Fastify + discord.js + @slack/bolt +
+- **/app/minute** — the original Node/TypeScript product (Fastify + discord.js +
   Octokit + simple-git + Playwright + node:sqlite). Runs under supervisor program `minute` on
   port 8787 using **Node 22** at `/opt/node22/bin/node` (pod default is Node 20; node:sqlite needs 22).
 - **/app/backend/server.py** — FastAPI on 8001: (1) LLM proxy `/api/llm/complete` using the
@@ -55,5 +55,4 @@ never leaves chat.
   changes-requested are detected via poll + webhook and reflected in the thread).
 - P1: Harden live-preview boot for the target CRACO app (install + `npm start` on :3055) — may be
   heavy; falls back to "no live photo" + PR on failure.
-- P2: Slack (Socket Mode) — code present, add tokens + manifest.
 - P2: GitHub webhook secret for instant PR events (poll fallback active).

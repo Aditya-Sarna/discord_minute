@@ -73,8 +73,8 @@ agenthub/agents/youtube/db
 *.deb
 *.dylib
 
-# Build caches
-.cache/
+# Local Ollama binary (not the app)
+.tools/
 
 memory/test_credentials.md
 

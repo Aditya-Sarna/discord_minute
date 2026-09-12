@@ -6,22 +6,13 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_META = {
-  classifying: { label: "Classifying", cls: "st-work" },
+  classifying: { label: "Asking", cls: "st-work" },
   working: { label: "Working", cls: "st-work" },
-  proof: { label: "Preview ready", cls: "st-proof" },
+  proof: { label: "Photo ready", cls: "st-proof" },
   handed_off: { label: "With tech", cls: "st-hand" },
   exited: { label: "Done", cls: "st-done" },
-  refused: { label: "Refused", cls: "st-ref" },
+  refused: { label: "Stopped", cls: "st-ref" },
 };
-
-const LOOP = [
-  { k: "/minute", d: "Non-tech ask in chat" },
-  { k: "working", d: "Fetch repo · smallest change" },
-  { k: "photo", d: "Screenshot in the thread" },
-  { k: "tweak", d: "Iterate — same PR" },
-  { k: "looks good", d: "Ping tech with the PR" },
-  { k: "approve", d: "Tech merges · Minute exits" },
-];
 
 function Pill({ ok, label, value }) {
   return (
@@ -67,6 +58,8 @@ function App() {
 
   const up = overview?.up;
   const discordOn = overview?.surfaces?.discord;
+  const messageContent = overview?.intents?.messageContent;
+  const githubWrite = overview?.githubWrite;
 
   return (
     <div className="wrap" data-testid="minute-dashboard">
@@ -77,15 +70,14 @@ function App() {
           <div className="logo">◷</div>
           <div>
             <div className="brand-name" data-testid="brand-name">minute</div>
-            <div className="brand-sub">the thin handoff between non-tech &amp; engineering</div>
+            <div className="brand-sub">talk in Discord · photo of the change · PR for tech</div>
           </div>
         </div>
         <div className="pills" data-testid="status-pills">
           <Pill ok={up} label="Service" value={up ? "live" : overview === null && !err ? "…" : "down"} />
-          <Pill ok={health?.llm_configured} label="LLM" value={health?.model || "…"} />
-          <Pill ok={overview?.githubConfigured} label="GitHub" />
-          <Pill ok={discordOn} label="Discord" />
-          <Pill ok={overview?.surfaces?.slack} label="Slack" />
+          <Pill ok={health?.llm_configured ?? overview?.llmConfigured} label="LLM" value={health?.model || overview?.llmModel || "…"} />
+          <Pill ok={overview?.githubConfigured && githubWrite !== false} label="GitHub" value={githubWrite === false ? "read-only" : undefined} />
+          <Pill ok={discordOn} label="Discord" value={overview?.discord?.userTag} />
         </div>
       </header>
 
@@ -96,30 +88,52 @@ function App() {
       )}
       {up && discordOn === false && (
         <div className="banner banner-warn" data-testid="discord-warn">
-          Discord bot isn't connected yet. Enable <b>Message Content Intent</b> in the Developer Portal and invite the
-          bot, then the loop goes live.
+          Discord isn’t connected. Invite the bot, then talk in the playground channel.
+        </div>
+      )}
+      {up && discordOn && messageContent === false && (
+        <div className="banner banner-warn" data-testid="intent-warn">
+          Message Content Intent is off — replies in the thread won’t reach Minute. Turn it on in the Developer Portal.
+        </div>
+      )}
+      {up && githubWrite === false && (
+        <div className="banner banner-warn" data-testid="github-warn">
+          GitHub token can’t write. Minute can talk, but it can’t open a PR until the token has repo write.
         </div>
       )}
 
       <section className="hero">
         <h1>
-          Someone who doesn't know git types <span className="hl">/minute</span>.<br />
-          A photo of the change lands in the same thread.
+          Say <span className="hl">@minute make the header green</span> — or drop a mock.<br />
+          A Playwright photo comes back in the same thread.
         </h1>
         <p className="lede">
-          Minute turns a plain-language request into the smallest possible pull request, screenshots the running app,
-          and posts it back in chat. The stakeholder iterates by replying. Tech only ever reviews the PR.
+          Talk, or attach an image / PDF / logo. Minute asks if it’s confused, edits the playground, and answers with a
+          screenshot of the running change. Say <b>looks good</b> when the photo is right. Tech reviews the PR — which
+          describes that change, not the chat log.
         </p>
       </section>
 
       <section className="loop" data-testid="loop">
-        {LOOP.map((s, i) => (
-          <div className="loop-step" key={s.k}>
-            <div className="loop-k">{s.k}</div>
-            <div className="loop-d">{s.d}</div>
-            {i < LOOP.length - 1 && <div className="loop-arrow">→</div>}
-          </div>
-        ))}
+        <div className="loop-step">
+          <div className="loop-k">talk or drop</div>
+          <div className="loop-d">@minute, /minute, or a file</div>
+          <div className="loop-arrow">→</div>
+        </div>
+        <div className="loop-step">
+          <div className="loop-k">photo</div>
+          <div className="loop-d">Playwright shot of this branch</div>
+          <div className="loop-arrow">→</div>
+        </div>
+        <div className="loop-step">
+          <div className="loop-k">looks good</div>
+          <div className="loop-d">say it or tap it</div>
+          <div className="loop-arrow">→</div>
+        </div>
+        <div className="loop-step">
+          <div className="loop-k">PR</div>
+          <div className="loop-d">diff + photo, for tech</div>
+        </div>
       </section>
 
       <div className="grid">
@@ -170,9 +184,9 @@ function App() {
           <PeopleRow label="Requesters" ids={overview?.requesters?.discordUserIds} />
           <PeopleRow label="Tech (approves)" ids={overview?.tech?.discordUserIds} />
           <div className="cmds">
-            <div className="cmd"><code>/minute</code> start a change in this channel</div>
+            <div className="cmd"><code>@minute</code> or <code>/minute</code> — talk, or drop a file</div>
             <div className="cmd"><b>reply</b> in the thread to tweak</div>
-            <div className="cmd"><b>Looks good</b> → tech is pinged with the PR</div>
+            <div className="cmd">say <b>looks good</b> or tap it → tech is pinged</div>
             <div className="cmd"><code>/minute-admin allow @user</code> grant access</div>
           </div>
         </section>
@@ -180,54 +194,42 @@ function App() {
 
       <section className="card runs" data-testid="runs-card">
         <div className="card-h">
-          <span>Runs</span>
+          <span>Live</span>
           <span className="muted">{runs.length} recent · in-flight {overview?.inflight ?? 0}</span>
         </div>
         {runs.length === 0 ? (
           <div className="empty" data-testid="runs-empty">
-            No runs yet. Type <code>/minute change the main page color to green</code> in your Discord playground channel.
+            Nothing yet. In Discord: <code>@minute make the header green</code> — or drop a mock.
           </div>
         ) : (
-          <table data-testid="runs-table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Requester</th>
-                <th>Request</th>
-                <th>PR</th>
-                <th>Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((r) => {
-                const meta = STATUS_META[r.status] || { label: r.status, cls: "" };
-                return (
-                  <tr key={r.id} data-testid={`run-${r.id}`}>
-                    <td>
-                      <span className={`badge ${meta.cls}`}>{meta.label}</span>
-                    </td>
-                    <td>{r.requesterName}</td>
-                    <td className="req">{(r.request || "").split("\n")[0].slice(0, 70)}</td>
-                    <td>
-                      {r.prUrl ? (
-                        <a href={r.prUrl} target="_blank" rel="noreferrer" data-testid={`run-pr-${r.id}`}>
-                          #{r.prNumber}
-                        </a>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-                    </td>
-                    <td className="muted">{new Date(r.updatedAt).toLocaleTimeString()}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="radio" data-testid="runs-table">
+            {runs.map((r) => {
+              const meta = STATUS_META[r.status] || { label: r.status, cls: "" };
+              const line = r.lastSummary || (r.request || "").split("\n")[0];
+              return (
+                <div className="radio-row" key={r.id} data-testid={`run-${r.id}`}>
+                  <span className={`badge ${meta.cls}`}>{meta.label}</span>
+                  <div className="radio-body">
+                    <div className="radio-who">{r.requesterName}</div>
+                    <div className="radio-line">{line?.slice(0, 90)}</div>
+                  </div>
+                  {r.prUrl ? (
+                    <a href={r.prUrl} target="_blank" rel="noreferrer" data-testid={`run-pr-${r.id}`}>
+                      #{r.prNumber}
+                    </a>
+                  ) : (
+                    <span className="muted">—</span>
+                  )}
+                  <span className="muted radio-time">{new Date(r.updatedAt).toLocaleTimeString()}</span>
+                </div>
+              );
+            })}
+          </div>
         )}
       </section>
 
       <footer className="foot">
-        Minute · Claude Sonnet 4.6 via Emergent · runs on GitHub PRs · git stays on the tech side
+        Minute · Discord conversation · Playwright proof · PR describes the diff
       </footer>
     </div>
   );

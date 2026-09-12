@@ -26,12 +26,12 @@ class TestHealth:
         assert r.status_code == 200, r.text
         d = r.json()
         assert d["ok"] is True
-        assert d["model"] == "claude-sonnet-4-6"
-        assert d["llm_configured"] is True
         assert d["service"] == "minute-proxy"
+        assert d.get("backend") == "ollama" or d.get("model")
+        assert d["llm_configured"] is True
 
 
-# --- LLM proxy (Emergent key + Claude Sonnet 4.6) ---
+# --- LLM (local Ollama) ---
 class TestLLM:
     def test_complete_returns_text(self, client):
         r = client.post(

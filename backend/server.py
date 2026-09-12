@@ -1,11 +1,5 @@
-"""Minute — LLM proxy (Emergent universal key) + dashboard bridge.
-
-The Node "minute" agent (port 8787) is stateless w.r.t. the model: it POSTs a
-prompt here and gets completed text back. This keeps the Emergent universal key
-server-side and lets the whole app run on Claude Sonnet 4.6 with no user key.
-"""
+"""Minute — local Ollama LLM + dashboard bridge to the Node bot."""
 import os
-import uuid
 
 import httpx
 from dotenv import load_dotenv
@@ -13,15 +7,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage
-
 load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "minute", ".env"))
 
-EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
+OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
+MODEL = os.environ.get("MINUTE_LLM_MODEL", os.environ.get("OLLAMA_MODEL", "qwen2.5-coder:7b"))
 MINUTE_INTERNAL_URL = os.environ.get("MINUTE_INTERNAL_URL", "http://localhost:8787")
-MODEL = os.environ.get("MINUTE_LLM_MODEL_NAME", "claude-sonnet-4-6")
 
-app = FastAPI(title="Minute LLM Proxy & Bridge")
+app = FastAPI(title="Minute Ollama proxy & bridge")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,30 +30,54 @@ class CompleteReq(BaseModel):
     system: str | None = None
 
 
+async def ollama_up() -> bool:
+    try:
+        async with httpx.AsyncClient(timeout=2) as c:
+            r = await c.get(f"{OLLAMA_BASE}/api/tags")
+            return r.status_code == 200
+    except Exception:  # noqa: BLE001
+        return False
+
+
 @app.get("/api/health")
 async def health():
+    up = await ollama_up()
     return {
-        "ok": True,
+        "ok": up,
         "service": "minute-proxy",
         "model": MODEL,
-        "llm_configured": bool(EMERGENT_LLM_KEY),
+        "backend": "ollama",
+        "llm_configured": up,
     }
 
 
 @app.post("/api/llm/complete")
 async def complete(req: CompleteReq):
-    if not EMERGENT_LLM_KEY:
-        raise HTTPException(500, "EMERGENT_LLM_KEY not configured")
-    chat = LlmChat(
-        api_key=EMERGENT_LLM_KEY,
-        session_id=f"minute-{uuid.uuid4().hex}",
-        system_message=req.system or "You are Minute, a precise code-editing assistant. You make the smallest correct change and always reply exactly in the format requested.",
-    ).with_model("anthropic", MODEL).with_params(max_tokens=req.max_tokens or 8000)
+    messages = []
+    if req.system:
+        messages.append({"role": "system", "content": req.system})
+    messages.append({"role": "user", "content": req.prompt})
     try:
-        text = await chat.send_message(UserMessage(text=req.prompt))
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(502, f"LLM error: {e}")
-    return {"text": text if isinstance(text, str) else str(text)}
+        async with httpx.AsyncClient(timeout=180) as c:
+            r = await c.post(
+                f"{OLLAMA_BASE}/api/chat",
+                json={
+                    "model": MODEL,
+                    "messages": messages,
+                    "stream": False,
+                    "options": {"num_predict": req.max_tokens or 8000, "temperature": 0.2},
+                },
+            )
+    except httpx.ConnectError as e:
+        raise HTTPException(
+            503,
+            f"Ollama is not running at {OLLAMA_BASE}. Start it with `ollama serve` and `ollama pull {MODEL}`.",
+        ) from e
+    if r.status_code >= 400:
+        raise HTTPException(502, f"Ollama {r.status_code}: {r.text[:400]}")
+    data = r.json()
+    text = (data.get("message") or {}).get("content") or data.get("response") or ""
+    return {"text": text}
 
 
 async def _bridge(path: str):

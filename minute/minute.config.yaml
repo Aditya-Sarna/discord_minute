@@ -1,0 +1,57 @@
+# Minute playground — tech draws this once.
+# Stakeholders never see git. Tech only reviews the PR.
+
+minute:
+  name: Office
+
+  admins:
+    discordUserIds:
+      - "1441931062652571672"
+    githubLogins: []
+
+  requesters:
+    discordUserIds:
+      - "1441931062652571672"
+
+  tech:
+    discordUserIds:
+      - "1441931062652571672"
+
+  playgrounds:
+    - id: llmwatermarking
+      discordChannelIds:
+        - "1541869097418096673"
+      github:
+        owner: Aditya-Sarna
+        repo: llmwatermarking
+        defaultBranch: main
+      preview:
+        baseUrl: ""
+        command: npm start
+        cwd: frontend
+        url: http://localhost:3055
+        waitSeconds: 180
+        defaultRoute: /
+        install: true
+        installTimeoutSeconds: 240
+      allow:
+        paths:
+          - frontend/src/
+          - src/
+          - app/
+          - public/
+          - content/
+          - components/
+        routes:
+          - /
+      refuse:
+        - auth
+        - authentication
+        - payments
+        - billing
+        - migrations
+        - infrastructure
+        - secrets
+        - production deploy
+        - rewrite
+        - architecture
