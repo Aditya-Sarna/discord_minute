@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>minute</title>
+    <style>
+      @font-face {
+        font-family: Minecraftia;
+        src: url("./fonts/Minecraftia-Regular.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      video {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 48%;
+        display: block;
+        background: #fff;
+      }
+
+      .grain,
+      .grain-b {
+        position: fixed;
+        inset: -10%;
+        z-index: 1;
+        pointer-events: none;
+        background-image: url("./grain.png");
+        background-size: 96px 96px;
+      }
+
+      .grain {
+        mix-blend-mode: overlay;
+        opacity: 0.55;
+        animation: grain 0.18s steps(2) infinite;
+      }
+
+      .grain-b {
+        mix-blend-mode: soft-light;
+        opacity: 0.4;
+        background-size: 140px 140px;
+        animation: grainb 0.22s steps(2) infinite;
+      }
+
+      @keyframes grain {
+        0% { transform: translate(0, 0); }
+        50% { transform: translate(-2%, 1.4%); }
+        100% { transform: translate(1.6%, -1.8%); }
+      }
+
+      @keyframes grainb {
+        0% { transform: translate(0, 0); }
+        50% { transform: translate(1.8%, -1.2%); }
+        100% { transform: translate(-1.4%, 2%); }
+      }
+
+      .cta {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 1.2rem;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.38em;
+        color: #b8860b;
+        font-family: Minecraftia, monospace;
+        font-size: clamp(16px, 2.2vw, 26px);
+        line-height: 1;
+        letter-spacing: 0.04em;
+        text-decoration: none;
+      }
+
+      .arrow {
+        display: inline-block;
+        transform: rotate(45deg);
+        font-size: 0.95em;
+        line-height: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <video
+      id="clip"
+      src="./download3.mp4"
+      autoplay
+      muted
+      playsinline
+      preload="auto"
+    ></video>
+    <div class="grain"></div>
+    <div class="grain-b"></div>
+    <a class="cta" href="./get.html" rel="noopener">Download<span class="arrow">↗</span></a>
+    <script>
+      const clip = document.getElementById("clip");
+      clip.loop = false;
+      const play = () => clip.play().catch(() => {});
+      clip.addEventListener("canplay", play, { once: true });
+      play();
+    </script>
+  </body>
+</html>

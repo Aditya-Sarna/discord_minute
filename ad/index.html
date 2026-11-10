@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>minute</title>
+    <link rel="preload" href="./relax.mp4" as="video" />
+    <style>
+      @font-face {
+        font-family: Minecraftia;
+        src: url("./fonts/Minecraftia-Regular.ttf") format("truetype");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+      }
+
+      body.main {
+        background: #1c4d8a;
+      }
+
+      #stage {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        cursor: pointer;
+        transition: opacity 0.7s ease;
+      }
+
+      #ad,
+      #hold {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        background: #000;
+        display: block;
+      }
+
+      #hud {
+        position: fixed;
+        right: 1.1rem;
+        bottom: 1.1rem;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
+      }
+
+      #skip {
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        color: #111;
+        font-family: Minecraftia, "Roboto Mono", monospace;
+        font-size: 14px;
+        line-height: 1;
+        letter-spacing: 0.06em;
+        padding: 0.72rem 1.15rem 0.55rem;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      }
+
+      #sound {
+        width: 2.4rem;
+        height: 2.4rem;
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        color: #111;
+        font: 400 0.95rem/1 system-ui, sans-serif;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      }
+
+      #main {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        overflow: hidden;
+        background: #1c4d8a;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.7s ease, visibility 0.7s ease;
+      }
+
+      #menu {
+        position: fixed;
+        left: 1.25rem;
+        bottom: 1.25rem;
+        z-index: 6;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.7em;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.45s ease, visibility 0.45s ease;
+      }
+
+      #menu a {
+        color: #fff;
+        font-family: Minecraftia, monospace;
+        font-size: clamp(20px, 3.1vw, 36px);
+        line-height: 1.15;
+        text-decoration: none;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        white-space: nowrap;
+      }
+
+      body.main #stage,
+      body.main #hud {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      body.main #main {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      body.ended #menu {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      #stage .grain,
+      #stage .grain-b {
+        position: absolute;
+        inset: -10%;
+        z-index: 2;
+        pointer-events: none;
+        background-image: url("./grain.png");
+        background-size: 96px 96px;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      #stage .grain {
+        mix-blend-mode: overlay;
+        animation: grain 0.18s steps(2) infinite;
+      }
+
+      #stage .grain-b {
+        mix-blend-mode: soft-light;
+        background-size: 140px 140px;
+        animation: grainb 0.22s steps(2) infinite;
+      }
+
+      #stage.grain-on .grain {
+        opacity: 0.55;
+        visibility: visible;
+      }
+
+      #stage.grain-on .grain-b {
+        opacity: 0.4;
+        visibility: visible;
+      }
+
+      @keyframes grain {
+        0% { transform: translate(0, 0); }
+        50% { transform: translate(-2%, 1.4%); }
+        100% { transform: translate(1.6%, -1.8%); }
+      }
+
+      @keyframes grainb {
+        0% { transform: translate(0, 0); }
+        50% { transform: translate(1.8%, -1.2%); }
+        100% { transform: translate(-1.4%, 2%); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <video
+        id="ad"
+        src="./mid6.mp4"
+        autoplay
+        muted
+        playsinline
+        webkit-playsinline
+        preload="auto"
+      ></video>
+      <div class="grain"></div>
+      <div class="grain-b"></div>
+    </div>
+    <div id="main">
+      <video
+        id="hold"
+        src="./relax.mp4"
+        muted
+        playsinline
+        webkit-playsinline
+        preload="auto"
+      ></video>
+    </div>
+    <nav id="menu">
+      <a href="./download.html" target="_blank" rel="noopener">Download</a>
+      <a href="./get.html" target="_blank" rel="noopener">Discord best minutes</a>
+      <a href="./socials.html" target="_blank" rel="noopener">Socials</a>
+      <a href="./get.html" target="_blank" rel="noopener">User Guide</a>
+    </nav>
+    <div id="hud">
+      <button id="sound" type="button" aria-label="Unmute">♪</button>
+      <button id="skip" type="button">SKIP</button>
+    </div>
+    <script>
+      const video = document.getElementById("ad");
+      const stage = document.getElementById("stage");
+      const sound = document.getElementById("sound");
+      const skip = document.getElementById("skip");
+      const hold = document.getElementById("hold");
+      const CHEETAH_AT = 11.45;
+
+      function markSound() {
+        sound.textContent = video.muted ? "♪" : "♫";
+        sound.setAttribute("aria-label", video.muted ? "Unmute" : "Mute");
+      }
+
+      async function playMuted() {
+        video.muted = true;
+        video.defaultMuted = true;
+        video.playsInline = true;
+        try {
+          await video.play();
+        } catch {
+          /* gesture handler below will retry */
+        }
+      }
+
+      async function unmute() {
+        video.muted = false;
+        try {
+          await video.play();
+        } catch {
+          video.muted = true;
+        }
+        markSound();
+      }
+
+      function openHold() {
+        if (document.body.classList.contains("main")) return;
+        stage.classList.remove("grain-on");
+        video.pause();
+        document.body.classList.add("main");
+        hold.muted = video.muted;
+        hold.currentTime = 0;
+        hold.play().catch(() => {});
+      }
+
+      function showMenu() {
+        hold.pause();
+        document.body.classList.add("ended");
+      }
+
+      video.addEventListener("timeupdate", () => {
+        stage.classList.toggle("grain-on", video.currentTime >= CHEETAH_AT);
+      });
+
+      video.addEventListener("ended", () => {
+        stage.classList.remove("grain-on");
+        openHold();
+      });
+
+      hold.addEventListener("ended", () => {
+        showMenu();
+      });
+
+      skip.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openHold();
+      });
+
+      sound.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (video.muted) unmute();
+        else {
+          video.muted = true;
+          markSound();
+        }
+      });
+
+      document.addEventListener(
+        "pointerdown",
+        () => {
+          if (!document.body.classList.contains("main")) unmute();
+        },
+        { once: true },
+      );
+
+      if (video.readyState >= 2) playMuted();
+      else video.addEventListener("canplay", playMuted, { once: true });
+
+      markSound();
+    </script>
+  </body>
+</html>

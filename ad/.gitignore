@@ -1,0 +1,8 @@
+ad.source.mp4
+bed.wav
+
+.models/
+.work/
+.proof/
+.vercel
+.env*
