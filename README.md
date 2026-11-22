@@ -10,7 +10,8 @@
   <a href="#end-to-end-workflow">Workflow</a> |
   <a href="#technology-stack">Tech stack</a> |
   <a href="#project-map">Project map</a> |
-  <a href="#testing">Testing</a>
+  <a href="#testing">Testing</a> |
+  <a href="WORKFLOW_SIMULATOR.md">Workflow Simulator</a>
 </p>
 
 > Minute is a Discord-driven visual handoff system. A stakeholder describes a small change or supplies a reference, Minute edits an isolated Git branch, starts the app, captures a real desktop and mobile screenshot, and opens or updates a pull request.
@@ -133,8 +134,8 @@ flowchart LR
 | Directory | Role | Key technology |
 |---|---|---|
 | [`minute/`](minute/) | Main production product | Node 22, TypeScript, discord.js, Fastify, Octokit, simple-git, Playwright |
-| [`backend/`](backend/) | Optional LLM/dashboard bridge | Python, FastAPI, Pydantic, HTTPX |
-| [`frontend/`](frontend/) | Read-only operator dashboard | React 19, CRACO, Axios, Tailwind CSS |
+| [`backend/`](backend/) | Optional LLM/dashboard bridge & pre-flight engine | Python, FastAPI, Pydantic, HTTPX |
+| [`frontend/`](frontend/) | Read-only operator dashboard & policy simulator | React 19, CRACO, Axios, Tailwind CSS |
 | [`ad/`](ad/) | Static promotional/download website | HTML, CSS, JavaScript, video, Vercel config |
 | [`test_reports/`](test_reports/) | Saved test evidence | Pytest XML and JSON reports |
 | [`memory/`](memory/) | Product requirements and build log | PRD and historical decisions |
@@ -415,6 +416,16 @@ npm start
 
 Set `REACT_APP_BACKEND_URL` to the FastAPI public or local API URL.
 
+### 5. Operator Dashboard & Workflow Pre-Flight Simulator
+
+The React operator dashboard includes an interactive **Workflow Pre-Flight Policy Simulator**:
+- **Policy Dry-Run**: Test change requests against active playground allowlists and hard refusals (`auth`, `payments`, `billing`, `migrations`, `infrastructure`, `secrets`) without sending messages in Discord or touching Git branches.
+- **One-Click Scenario Presets**: Dry-run visual changes (`🎨 Green Header`, `📱 Mobile View`) against policy blocks (`🚫 Stripe Billing`, `🔒 OAuth Auth`).
+- **Telemetry & Guardrails**: Displays active allowed paths, safety refusal lists, and real-time backend/LLM readiness.
+- **API**: Exposed via `POST /api/minute/preflight` in `backend/server.py`.
+
+For architecture details, see [WORKFLOW_SIMULATOR.md](WORKFLOW_SIMULATOR.md).
+
 ### Discord setup checklist
 
 - Enable **Message Content Intent** to receive thread replies and mentions.
@@ -489,6 +500,7 @@ The backend tests cover:
 - Pydantic request validation.
 - Minute overview bridge.
 - Recent run bridge.
+- Workflow pre-flight policy simulator (visual acceptance & scope refusals).
 
 </details>
 
