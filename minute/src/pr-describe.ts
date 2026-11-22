@@ -57,7 +57,7 @@ export function prBodyFromChange(opts: {
     ``,
     `Route: \`${opts.proof.route}\` · Playground \`${opts.playground.id}\` · ${repoLabel(opts.playground)}`,
     ``,
-    `Asked in Discord by **${opts.run.requesterName}**: ${ask}`,
+    `Asked in Slack by **${opts.run.requesterName}**: ${ask}`,
     using ? `\nReference:\n${using}` : "",
     opts.threadUrl ? `Thread: ${opts.threadUrl}` : "",
     ``,

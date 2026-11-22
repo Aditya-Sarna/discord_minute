@@ -4,9 +4,9 @@ import Fastify, { type FastifyRequest } from "fastify";
 import { loadConfig } from "./config.js";
 import { openDb, closeDb } from "./db.js";
 import { log } from "./logger.js";
-import { connectDiscord, discordStatus } from "./discord-app.js";
+import { connectSlack, slackStatus } from "./slack-app.js";
 import { startGithubWatch, stopGithubWatch } from "./github-watch.js";
-import { discordAdapter, asSendable } from "./surfaces/discord.js";
+import { slackAdapter } from "./surfaces/slack.js";
 import { startJobs } from "./jobs.js";
 import { recoverStuckJobs, stopWorker, inflightCount } from "./queue.js";
 import { registerGithubWebhook } from "./webhooks.js";
@@ -27,9 +27,12 @@ function bootEnv() {
   if (!process.env.GITHUB_TOKEN) {
     throw new Error("Set GITHUB_TOKEN");
   }
-  if (!process.env.DISCORD_TOKEN) {
-    throw new Error("Set DISCORD_TOKEN");
-  }
+  const bot = process.env.SLACK_BOT_TOKEN?.trim() || "";
+  const appToken = process.env.SLACK_APP_TOKEN?.trim() || "";
+  const signing = process.env.SLACK_SIGNING_SECRET?.trim() || "";
+  if (!bot.startsWith("xoxb-") || bot.length < 20) throw new Error("Set SLACK_BOT_TOKEN (xoxb-…)");
+  if (!appToken.startsWith("xapp-") || appToken.length < 20) throw new Error("Set SLACK_APP_TOKEN (xapp-…) for Socket Mode");
+  if (signing.length < 8) throw new Error("Set SLACK_SIGNING_SECRET");
 }
 
 async function verifyDiscordRequest(raw: string, signature: string, timestamp: string, publicKey: string) {
@@ -66,19 +69,19 @@ async function main() {
   recoverStuckJobs();
   loadConfig();
 
-  const discord = await connectDiscord();
-
-  if (discord) {
-    log.info({ user: discordStatus.userTag || "logging in" }, "discord connected");
-  } else {
-    log.warn("discord skipped");
+  const slack = await connectSlack();
+  if (!slack) {
+    throw new Error("Slack did not connect. Check SLACK_BOT_TOKEN, SLACK_APP_TOKEN, and SLACK_SIGNING_SECRET.");
+  }
+  const wired = loadConfig().playgrounds.some((p) => (p.slackChannelIds ?? []).length > 0);
+  if (!wired) log.warn("No slackChannelIds in minute.config.yaml — /minute will not find a playground");
+  if (!(loadConfig().admins.slackUserIds ?? []).length) {
+    log.warn("No slackUserIds for admins — nobody can run /minute until you add Slack member ids");
   }
 
   const lookup = async (run: Run): Promise<ChatAdapter | null> => {
-    if (!discord) return null;
-    const channel = await discord.client.channels.fetch(run.threadId);
-    if (!channel || !channel.isTextBased()) return null;
-    return discordAdapter(asSendable(channel));
+    if (!slack || run.surface !== "slack") return null;
+    return slackAdapter(slack.client, { channel: run.channelId, threadTs: run.threadId });
   };
 
   startJobs(lookup);
@@ -88,7 +91,7 @@ async function main() {
   const ollama = llmBackend() === "ollama" ? await ollamaUp() : true;
   log.info(
     {
-      discord: discordStatus.ready,
+      slack: slackStatus.ready,
       githubWrite: write,
       ollama,
       model: ollamaModel(),
@@ -120,14 +123,14 @@ async function main() {
         ok: true,
         inflight: inflightCount(),
         name: loadConfig().name,
-        discord: discordStatus.ready,
+        slack: slackStatus.ready,
         githubWrite: write,
         llm: llmConfigured(),
         ollama: llmBackend() === "ollama" ? await ollamaUp() : true,
         playwright: playwrightOk,
-        messageContent: discordStatus.messageContent,
+        messageContent: true,
       };
-      if ((process.env.DISCORD_TOKEN && !discordStatus.ready) || !write || !body.ollama || !playwrightOk) {
+      if (!slackStatus.ready || !write || !body.ollama || !playwrightOk) {
         return reply.code(503).send({ ...body, ok: false });
       }
       return body;
@@ -167,7 +170,7 @@ async function main() {
     killAllPreviews();
     stopGithubWatch();
     await stopWorker();
-    discord?.client.destroy();
+    await slack.stop();
     await http.close();
     closeDb();
     process.exit(0);

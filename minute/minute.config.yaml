@@ -5,20 +5,31 @@ minute:
   name: Office
 
   admins:
+    # Slack member id (profile → ⋮ → Copy member ID). Looks like U0123ABC.
+    slackUserIds:
+      - "U0CKKDS4HRV"
     discordUserIds:
       - "1441931062652571672"
     githubLogins: []
 
   requesters:
+    slackUserIds:
+      - "U0CKKDS4HRV"
     discordUserIds:
       - "1441931062652571672"
 
   tech:
+    slackUserIds:
+      - "U0CKKDS4HRV"
     discordUserIds:
       - "1441931062652571672"
 
   playgrounds:
     - id: llmwatermarking
+      # Slack channel id (channel details → About). Looks like C0123ABC.
+      slackChannelIds:
+        - "C0CKVGARCMB"
+        - "C0CL0KHM35Y"
       discordChannelIds:
         - "1541869097418096673"
       github:

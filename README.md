@@ -1,7 +1,7 @@
 # ⏰Minute
 
 <p>
-  <b>Talk in Discord. See the change. Approve it. Let tech review the PR.</b>
+  <b>Talk in Slack. See the change. Approve it. Let tech review the PR.</b>
 </p>
 
 <p>
@@ -13,7 +13,7 @@
   <a href="#testing">Testing</a>
 </p>
 
-> Minute is a Discord-driven visual handoff system. A stakeholder describes a small change or supplies a reference, Minute edits an isolated Git branch, starts the app, captures a real desktop and mobile screenshot, and opens or updates a pull request.
+> Minute is a Slack-driven visual handoff system. A stakeholder describes a small change or supplies a reference, Minute edits an isolated Git branch, starts the app, captures a real desktop and mobile screenshot, and opens or updates a pull request.
 
 ## See the loop
 
@@ -355,7 +355,7 @@ Tech can then approve, merge, close, or request changes on GitHub. Minute detect
 - Node.js 22+
 - npm
 - Git
-- Discord bot token and privileged Message Content Intent
+- Slack bot token, app-level token, and signing secret (Socket Mode)
 - GitHub PAT with repository and pull-request write access
 - Ollama or another supported LLM backend
 - Playwright Chromium
@@ -381,12 +381,13 @@ Edit:
 - [`.env`](minute/.env.example) — credentials and runtime settings.
 - [`minute.config.yaml`](minute/minute.config.yaml) — channels, repositories, preview, and allowlist.
 
-Start and register Discord commands:
+Start Minute:
 
 ```bash
 npm start
-npm run discord:commands
 ```
+
+Slack uses Socket Mode. Put `SLACK_BOT_TOKEN` (`xoxb-`), `SLACK_APP_TOKEN` (`xapp-`), and `SLACK_SIGNING_SECRET` in `.env`, then invite the app and run `/minute` in a channel listed under `slackChannelIds`.
 
 Useful commands:
 
@@ -415,18 +416,13 @@ npm start
 
 Set `REACT_APP_BACKEND_URL` to the FastAPI public or local API URL.
 
-### Discord setup checklist
+### Slack setup checklist
 
-- Enable **Message Content Intent** to receive thread replies and mentions.
-- Invite the bot with:
-  - `bot`
-  - `applications.commands`
-- Allow the bot to:
-  - Send messages.
-  - Create public threads.
-  - Attach files.
-  - Read message history.
-- Add the configured channel to `minute.config.yaml`.
+- Create the app at [api.slack.com/apps](https://api.slack.com/apps) and turn on **Socket Mode**.
+- Bot scopes: `chat:write`, `commands`, `files:write`, `files:read`, `channels:history`, `groups:history`, `app_mentions:read`, `users:read`.
+- Bot events: `app_mention`, `message.channels`, `message.groups`.
+- Slash commands: `/minute` and `/minute-admin`.
+- Add the Slack channel id and member ids to `minute.config.yaml`.
 
 ---
 

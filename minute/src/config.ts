@@ -12,17 +12,20 @@ const schema = z.object({
     name: z.string().default("Office"),
     admins: z
       .object({
+        slackUserIds: ids,
         discordUserIds: ids,
         githubLogins: ids,
       })
       .default({}),
     requesters: z
       .object({
+        slackUserIds: ids,
         discordUserIds: ids,
       })
       .default({}),
     tech: z
       .object({
+        slackUserIds: ids,
         discordUserIds: ids,
       })
       .default({}),
@@ -30,6 +33,7 @@ const schema = z.object({
       .array(
         z.object({
           id: z.string(),
+          slackChannelIds: ids,
           discordChannelIds: ids,
           github: z.object({
             owner: z.string(),
@@ -80,12 +84,19 @@ export function reloadConfig(): MinuteConfig {
   return loadConfig();
 }
 
-export function playgroundForChannel(_surface: Surface, channelId: string): Playground | undefined {
-  return loadConfig().playgrounds.find((p) => p.discordChannelIds.includes(channelId));
+function idsFor(surface: Surface, slack: string[] | undefined, discord: string[]): string[] {
+  if (surface === "slack" && slack && slack.length) return slack;
+  if (surface === "slack") return [];
+  return discord;
 }
 
-export function techIds(_surface: Surface): string[] {
-  return loadConfig().tech.discordUserIds;
+export function playgroundForChannel(surface: Surface, channelId: string): Playground | undefined {
+  return loadConfig().playgrounds.find((p) => idsFor(surface, p.slackChannelIds, p.discordChannelIds).includes(channelId));
+}
+
+export function techIds(surface: Surface): string[] {
+  const tech = loadConfig().tech;
+  return idsFor(surface, tech.slackUserIds, tech.discordUserIds);
 }
 
 export function repoLabel(p: Playground): string {

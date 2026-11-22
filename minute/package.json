@@ -2,7 +2,7 @@
   "name": "minute",
   "version": "0.1.0",
   "private": true,
-  "description": "Slim handoff between non-tech stakeholders and engineering, in Discord.",
+  "description": "Slim handoff between non-tech stakeholders and engineering, in Slack.",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -21,6 +21,7 @@
     "@anthropic-ai/sdk": "^0.52.0",
     "@octokit/rest": "^21.1.1",
     "@octokit/webhooks": "^13.8.0",
+    "@slack/bolt": "^5.1.0",
     "@types/node": "^22.15.32",
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",

@@ -69,7 +69,7 @@ export async function createScratchRepo(opts: {
   const gh = octokit();
   const me = await gh.users.getAuthenticated();
   const privateRepo = process.env.MINUTE_SCRATCH_PUBLIC !== "1";
-  const description = opts.description.replace(/\s+/g, " ").trim().slice(0, 140) || "Started from Discord with Minute";
+  const description = opts.description.replace(/\s+/g, " ").trim().slice(0, 140) || "Started from Slack with Minute";
 
   const create = async (name: string) => {
     if (opts.owner.toLowerCase() === me.data.login.toLowerCase()) {

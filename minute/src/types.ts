@@ -1,4 +1,4 @@
-export type Surface = "discord";
+export type Surface = "slack" | "discord";
 
 export type RunStatus =
   | "classifying"
@@ -91,13 +91,16 @@ export type MinuteConfig = {
   name: string;
   admins: {
     discordUserIds: string[];
+    slackUserIds?: string[];
+    discordUserIds: string[];
     githubLogins: string[];
   };
   requesters: {
+    slackUserIds?: string[];
     discordUserIds: string[];
   };
   tech: {
-    discordUserIds: string[];
+    slackUserIds?: string[];
   };
   playgrounds: Playground[];
 };

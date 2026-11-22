@@ -1,6 +1,6 @@
 # Minute
 
-A Discord plugin that makes the handoff between non-tech people and engineering **thin**.
+A Slack bot that makes the handoff between non-tech people and engineering **thin**.
 
 Someone who does not know git asks for a simple thing. Minute puts a photo of the change in **the same conversation**. They iterate there. When they are satisfied they ping tech. Tech reviews the **PR on technical grounds**. Git stays on the tech side.
 
@@ -50,23 +50,26 @@ Edit `minute.config.yaml`:
 - **admins** — can `/minute-admin allow @person`
 - **requesters** — selected employees who may run `/minute` (admins can grant more in chat)
 - **tech** — who gets pinged on sign-off
-- **playgrounds** — one Discord channel → one repo, allowed paths/routes, refuse list, preview
+- **playgrounds** — one Slack channel → one repo, allowed paths/routes, refuse list, preview
 
-Channel IDs:
+Channel and member IDs:
 
-- Discord: right-click channel → Copy Channel ID (Developer Mode on)
+- Channel: open the channel → About → copy the id (`C…`) into `slackChannelIds`
+- Member: profile → Copy member ID (`U…`) into `slackUserIds` for admins, requesters, and tech
 
-### 2. Discord
+### 2. Slack
 
-1. [Discord Developer Portal](https://discord.com/developers/applications) → New Application → Bot → Reset Token → `DISCORD_TOKEN`
-2. OAuth2 → Client ID → `DISCORD_CLIENT_ID`
-3. Bot → Privileged Gateway Intents → **Message Content Intent**
-4. OAuth2 → URL Generator → scopes `bot` `applications.commands` → bot perms: Send Messages, Create Public Threads, Attach Files, Read Message History
-5. Invite the bot, then:
+Socket Mode, so the bot does not need a public URL.
 
-```bash
-npm run discord:commands
-```
+1. [api.slack.com/apps](https://api.slack.com/apps) → Create New App → From scratch
+2. Socket Mode → enable → generate an app-level token with `connections:write` → `SLACK_APP_TOKEN` (`xapp-`)
+3. OAuth & Permissions → Bot Token Scopes: `chat:write`, `commands`, `files:write`, `files:read`, `channels:history`, `groups:history`, `app_mentions:read`, `users:read` → install to the workspace → `SLACK_BOT_TOKEN` (`xoxb-`)
+4. Basic Information → Signing Secret → `SLACK_SIGNING_SECRET`
+5. Slash Commands → `/minute` and `/minute-admin` (the request is the command text, for example `/minute make the header green`; `/minute-admin allow U0123`)
+6. Event Subscriptions → enable, subscribe to bot events `app_mention`, `message.channels`, `message.groups`
+7. Invite the app into the playground channel
+
+Put those three tokens in `.env`, and the Slack ids in `minute.config.yaml`, then `npm start`.
 
 ### 3. GitHub
 

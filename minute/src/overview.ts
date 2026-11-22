@@ -2,7 +2,7 @@ import { loadConfig, repoLabel } from "./config.js";
 import { listGranted } from "./access.js";
 import { inflightCount } from "./queue.js";
 import { recentRuns } from "./store.js";
-import { discordStatus } from "./discord-app.js";
+import { slackStatus } from "./slack-app.js";
 import { llmConfigured } from "./llm.js";
 import { githubWriteOk } from "./github.js";
 
@@ -17,23 +17,23 @@ export async function overviewPayload() {
     llmConfigured: llmConfigured(),
     llmModel: process.env.MINUTE_LLM_MODEL || "qwen2.5-coder:7b",
     llmBackend: process.env.MINUTE_LLM_BACKEND || "ollama",
-    intents: { messageContent: discordStatus.messageContent },
-    discord: { userTag: discordStatus.userTag, ready: discordStatus.ready },
+    intents: { messageContent: true },
+    slack: { userTag: slackStatus.userTag, ready: slackStatus.ready },
     surfaces: {
-      discord: discordStatus.ready,
+      slack: slackStatus.ready,
     },
     inflight: inflightCount(),
-    admins: { discordUserIds: cfg.admins.discordUserIds },
+    admins: { slackUserIds: cfg.admins.slackUserIds ?? [] },
     requesters: {
-      discordUserIds: listGranted("discord"),
+      slackUserIds: listGranted("slack"),
     },
-    tech: { discordUserIds: cfg.tech.discordUserIds },
+    tech: { slackUserIds: cfg.tech.slackUserIds ?? [] },
     playgrounds: cfg.playgrounds.map((p) => ({
       id: p.id,
       repo: repoLabel(p),
       defaultBranch: p.github.defaultBranch,
       livePreview: Boolean(p.preview.command),
-      discordChannelIds: p.discordChannelIds,
+      slackChannelIds: p.slackChannelIds ?? [],
       allowPaths: p.allow.paths,
     })),
   };

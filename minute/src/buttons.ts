@@ -1,7 +1,12 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 function secret(): string {
-  return process.env.MINUTE_SIGNING_SECRET || process.env.DISCORD_TOKEN || "minute-dev-signing";
+  return (
+    process.env.MINUTE_SIGNING_SECRET ||
+    process.env.SLACK_BOT_TOKEN ||
+    process.env.DISCORD_TOKEN ||
+    "minute-dev-signing"
+  );
 }
 
 function hmac(payload: string): string {

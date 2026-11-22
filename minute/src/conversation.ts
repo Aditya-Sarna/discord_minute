@@ -18,6 +18,7 @@ export async function beginSurfaceRun(opts: {
   channelId: string;
   text: string;
   files?: Attachment[];
+  kind?: "tweak" | "scratch" | "ask";
   guildId?: string;
   threadUrl?: (threadId: string) => string | undefined;
   skipChips?: boolean;
@@ -37,7 +38,7 @@ export async function beginSurfaceRun(opts: {
   if (!text && !files.length) return "Say what you want, or drop a mock / doc / logo.";
 
   const started = await opts.openThread();
-  const kind = inferRunKind(text, playground);
+  const kind = inferRunKind(text, playground, opts.kind);
   const run = createRunDraft({
     surface: opts.surface,
     channelId: opts.channelId,

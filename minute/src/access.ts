@@ -2,17 +2,20 @@ import { loadConfig } from "./config.js";
 import { getDb } from "./db.js";
 import type { Surface } from "./types.js";
 
-function listFor(kind: "admins" | "requesters" | "tech"): string[] {
-  return loadConfig()[kind].discordUserIds;
+function listFor(kind: "admins" | "requesters" | "tech", surface: Surface): string[] {
+  const row = loadConfig()[kind];
+  if (surface === "slack" && row.slackUserIds && row.slackUserIds.length) return row.slackUserIds;
+  if (surface === "slack") return [];
+  return row.discordUserIds;
 }
 
-export function isAdmin(_surface: Surface, userId: string): boolean {
-  return listFor("admins").includes(userId);
+export function isAdmin(surface: Surface, userId: string): boolean {
+  return listFor("admins", surface).includes(userId);
 }
 
 export function isRequester(surface: Surface, userId: string): boolean {
   if (isAdmin(surface, userId)) return true;
-  return [...listFor("requesters"), ...overlayIds(surface)].includes(userId);
+  return [...listFor("requesters", surface), ...overlayIds(surface)].includes(userId);
 }
 
 export function grant(surface: Surface, userId: string): void {
@@ -33,7 +36,7 @@ function overlayIds(surface: Surface): string[] {
 }
 
 export function listGranted(surface: Surface): string[] {
-  return [...new Set([...listFor("requesters"), ...overlayIds(surface)])];
+  return [...new Set([...listFor("requesters", surface), ...overlayIds(surface)])];
 }
 
 export function denyMessage(): string {

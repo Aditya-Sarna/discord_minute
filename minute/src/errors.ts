@@ -22,7 +22,7 @@ export function stakeholderError(message: string): string {
     return "Couldn’t take a photo — Playwright Chromium isn’t installed.";
   }
   if (/BASE_TYPE_MAX_LENGTH|2000 or fewer/i.test(one)) {
-    return "Discord wouldn’t post the update — the message was too long. Try the request again.";
+    return "Slack wouldn’t post the update — the message was too long. Try the request again.";
   }
   if (/npm install failed|ERESOLVE|legacy-peer-deps/i.test(one)) {
     return "Couldn’t boot the app for a photo (npm install). The change may still be in the PR.";

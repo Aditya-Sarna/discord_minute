@@ -435,7 +435,7 @@ Walk a human through the code. Use exactly these headings:
 
 Under Follow, numbered pointers like: 1. \`path\` → \`symbol\` — what it does.
 Forbidden: Function:/File:/Implementation: lists, "below is a breakdown", a Summary recap.
-Cite only files that appear above. Discord markdown. No preamble.`,
+Cite only files that appear above. Slack mrkdwn. No preamble.`,
     {
       maxTokens: 1600,
       system:

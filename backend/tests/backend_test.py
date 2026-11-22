@@ -67,7 +67,7 @@ class TestMinuteBridge:
         d = r.json()
         assert d.get("up") is True, d
         assert d.get("githubConfigured") is True, d
-        assert d.get("surfaces", {}).get("discord") is True, d
+        assert d.get("surfaces", {}).get("slack") is True, d
         pgs = d.get("playgrounds")
         assert isinstance(pgs, list) and len(pgs) > 0
         pg = next((p for p in pgs if p["id"] == "llmwatermarking"), None)

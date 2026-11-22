@@ -57,8 +57,7 @@ function App() {
   }, [tick, load]);
 
   const up = overview?.up;
-  const discordOn = overview?.surfaces?.discord;
-  const messageContent = overview?.intents?.messageContent;
+  const slackOn = overview?.surfaces?.slack;
   const githubWrite = overview?.githubWrite;
 
   return (
@@ -70,14 +69,14 @@ function App() {
           <div className="logo">◷</div>
           <div>
             <div className="brand-name" data-testid="brand-name">minute</div>
-            <div className="brand-sub">talk in Discord · photo of the change · PR for tech</div>
+            <div className="brand-sub">talk in Slack · photo of the change · PR for tech</div>
           </div>
         </div>
         <div className="pills" data-testid="status-pills">
           <Pill ok={up} label="Service" value={up ? "live" : overview === null && !err ? "…" : "down"} />
           <Pill ok={health?.llm_configured ?? overview?.llmConfigured} label="LLM" value={health?.model || overview?.llmModel || "…"} />
           <Pill ok={overview?.githubConfigured && githubWrite !== false} label="GitHub" value={githubWrite === false ? "read-only" : undefined} />
-          <Pill ok={discordOn} label="Discord" value={overview?.discord?.userTag} />
+          <Pill ok={slackOn} label="Slack" value={overview?.slack?.userTag} />
         </div>
       </header>
 
@@ -86,14 +85,9 @@ function App() {
           {err} — the control API may be starting. Retrying…
         </div>
       )}
-      {up && discordOn === false && (
-        <div className="banner banner-warn" data-testid="discord-warn">
-          Discord isn’t connected. Invite the bot, then talk in the playground channel.
-        </div>
-      )}
-      {up && discordOn && messageContent === false && (
-        <div className="banner banner-warn" data-testid="intent-warn">
-          Message Content Intent is off — replies in the thread won’t reach Minute. Turn it on in the Developer Portal.
+      {up && slackOn === false && (
+        <div className="banner banner-warn" data-testid="slack-warn">
+          Slack isn’t connected. Invite the app, then talk in the playground channel.
         </div>
       )}
       {up && githubWrite === false && (
@@ -161,7 +155,7 @@ function App() {
                 <span className={`tag ${p.livePreview ? "tag-on" : ""}`}>
                   {p.livePreview ? "live screenshot" : "no live photo"}
                 </span>
-                {p.discordChannelIds?.map((c) => (
+                {(p.slackChannelIds || []).map((c) => (
                   <span className="tag tag-mono" key={c}>#{c.slice(-6)}</span>
                 ))}
               </div>
@@ -180,9 +174,9 @@ function App() {
             <span>People &amp; rails</span>
             <span className="muted">access</span>
           </div>
-          <PeopleRow label="Admins" ids={overview?.admins?.discordUserIds} />
-          <PeopleRow label="Requesters" ids={overview?.requesters?.discordUserIds} />
-          <PeopleRow label="Tech (approves)" ids={overview?.tech?.discordUserIds} />
+          <PeopleRow label="Admins" ids={overview?.admins?.slackUserIds} />
+          <PeopleRow label="Requesters" ids={overview?.requesters?.slackUserIds} />
+          <PeopleRow label="Tech (approves)" ids={overview?.tech?.slackUserIds} />
           <div className="cmds">
             <div className="cmd"><code>@minute</code> or <code>/minute</code> — talk, or drop a file</div>
             <div className="cmd"><b>reply</b> in the thread to tweak</div>
@@ -199,7 +193,7 @@ function App() {
         </div>
         {runs.length === 0 ? (
           <div className="empty" data-testid="runs-empty">
-            Nothing yet. In Discord: <code>@minute make the header green</code> — or drop a mock.
+            Nothing yet. In Slack: <code>@minute make the header green</code> — or drop a mock.
           </div>
         ) : (
           <div className="radio" data-testid="runs-table">
@@ -229,7 +223,7 @@ function App() {
       </section>
 
       <footer className="foot">
-        Minute · Discord conversation · Playwright proof · PR describes the diff
+        Minute · Slack conversation · Playwright proof · PR describes the diff
       </footer>
     </div>
   );
