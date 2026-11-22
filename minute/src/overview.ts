@@ -35,6 +35,8 @@ export async function overviewPayload() {
       livePreview: Boolean(p.preview.command),
       discordChannelIds: p.discordChannelIds,
       allowPaths: p.allow.paths,
+      allowRoutes: p.allow.routes,
+      refuse: p.refuse,
     })),
   };
 }

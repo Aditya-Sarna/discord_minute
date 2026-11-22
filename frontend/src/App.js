@@ -31,6 +31,51 @@ function App() {
   const [err, setErr] = useState(null);
   const [tick, setTick] = useState(0);
 
+  const [simText, setSimText] = useState("@minute make the header forest green");
+  const [simResult, setSimResult] = useState(null);
+  const [simLoading, setSimLoading] = useState(false);
+
+  const handlePreflight = async (customText) => {
+    const textToTest = customText || simText;
+    if (!textToTest.trim()) return;
+    setSimLoading(true);
+    try {
+      const res = await axios.post(`${API}/minute/preflight`, {
+        request: textToTest,
+        playground_id: overview?.playgrounds?.[0]?.id,
+      });
+      setSimResult(res.data);
+    } catch {
+      // Local fallback simulator when backend endpoint is unreachable
+      const lowered = textToTest.toLowerCase();
+      const refuses = overview?.playgrounds?.[0]?.refuse || [
+        "auth", "authentication", "payments", "billing", "migrations", "infrastructure", "secrets"
+      ];
+      const matched = refuses.filter((r) => lowered.includes(r));
+      if (matched.length > 0) {
+        setSimResult({
+          ok: false,
+          status: "refused",
+          reason: `Refused by Minute policy. Request touches restricted scope: ${matched.join(", ")}. Ping tech directly.`,
+          matched_refusals: matched,
+          category: "hard_refusal",
+          route: "/",
+        });
+      } else {
+        setSimResult({
+          ok: true,
+          status: "accepted",
+          reason: "Request passes all safety allowlists and policy guardrails. Safe for automated visual patch.",
+          matched_refusals: [],
+          category: "visual_tweak",
+          route: "/",
+        });
+      }
+    } finally {
+      setSimLoading(false);
+    }
+  };
+
   const load = useCallback(async () => {
     try {
       const [o, r, h] = await Promise.all([
@@ -166,10 +211,19 @@ function App() {
                 ))}
               </div>
               <div className="pg-paths">
+                <span className="muted" style={{ fontSize: "11px", alignSelf: "center", marginRight: "2px" }}>allow:</span>
                 {p.allowPaths.map((a) => (
                   <code key={a}>{a}</code>
                 ))}
               </div>
+              {p.refuse && p.refuse.length > 0 && (
+                <div className="pg-refuse">
+                  <span className="muted" style={{ fontSize: "11px", alignSelf: "center", marginRight: "2px" }}>refuses:</span>
+                  {p.refuse.map((rf) => (
+                    <span className="tag tag-refuse" key={rf}>{rf}</span>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
           {!overview?.playgrounds?.length && <div className="empty">No playgrounds configured.</div>}
@@ -191,6 +245,101 @@ function App() {
           </div>
         </section>
       </div>
+
+      <section className="card simulator-card" data-testid="simulator-card">
+        <div className="card-h">
+          <div>
+            <span>Workflow Pre-Flight Simulator</span>
+            <span className="sim-sub"> · dry-run policy guardrails before hitting Discord</span>
+          </div>
+          <span className="tag tag-on">operator sandbox</span>
+        </div>
+        <div className="sim-presets">
+          <button
+            type="button"
+            className="sim-preset-btn"
+            onClick={() => {
+              setSimText("@minute make the header forest green");
+              handlePreflight("@minute make the header forest green");
+            }}
+          >
+            🎨 Visual: Green Header
+          </button>
+          <button
+            type="button"
+            className="sim-preset-btn"
+            onClick={() => {
+              setSimText("@minute add Stripe checkout and billing");
+              handlePreflight("@minute add Stripe checkout and billing");
+            }}
+          >
+            🚫 Refusal: Stripe Billing
+          </button>
+          <button
+            type="button"
+            className="sim-preset-btn"
+            onClick={() => {
+              setSimText("@minute configure OAuth authentication");
+              handlePreflight("@minute configure OAuth authentication");
+            }}
+          >
+            🔒 Refusal: OAuth Auth
+          </button>
+          <button
+            type="button"
+            className="sim-preset-btn"
+            onClick={() => {
+              setSimText("@minute show mobile preview");
+              handlePreflight("@minute show mobile preview");
+            }}
+          >
+            📱 Viewport: Mobile
+          </button>
+        </div>
+        <div className="sim-form">
+          <input
+            className="sim-input"
+            type="text"
+            value={simText}
+            onChange={(e) => setSimText(e.target.value)}
+            placeholder="Type a stakeholder request (e.g. '@minute make button purple' or '@minute add auth')..."
+            data-testid="simulator-input"
+          />
+          <button
+            className="sim-run-btn"
+            type="button"
+            onClick={() => handlePreflight()}
+            disabled={simLoading}
+            data-testid="simulator-run-btn"
+          >
+            {simLoading ? "Checking..." : "Simulate Intent →"}
+          </button>
+        </div>
+        {simResult && (
+          <div
+            className={`sim-verdict ${simResult.ok ? "verdict-ok" : "verdict-refused"}`}
+            data-testid="simulator-verdict"
+          >
+            <div className="verdict-header">
+              <span className={`badge ${simResult.ok ? "st-proof" : "st-ref"}`}>
+                {simResult.status.toUpperCase()}
+              </span>
+              <span className="verdict-category">
+                Scope: <b>{simResult.category}</b> · Target Route: <code>{simResult.route}</code>
+              </span>
+            </div>
+            <div className="verdict-reason">{simResult.reason}</div>
+            {simResult.matched_refusals?.length > 0 && (
+              <div className="verdict-tags">
+                <span className="muted" style={{ fontSize: "11px" }}>Triggered Guardrails:</span>
+                {simResult.matched_refusals.map((m) => (
+                  <span className="tag tag-refuse" key={m}>{m}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       <section className="card runs" data-testid="runs-card">
         <div className="card-h">

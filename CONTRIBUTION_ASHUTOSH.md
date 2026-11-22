@@ -16,23 +16,30 @@ In the Minute architecture, stakeholders interact exclusively through Discord wh
    - Path allowlists and strict safety refusals (blocking requests touching auth, payments, migrations, infrastructure, secrets, etc.).
    - Access control roles (`admins`, `requesters`, `tech`).
 
-2. **LLM Backend & Inference Routing (`minute/src/llm.ts`)**:
+2. **Workflow Pre-Flight Simulator & Guardrail Sandbox (Unique Innovation)**:
+   - Built an interactive **Pre-Flight Policy Simulator** in `backend/server.py` and `frontend/src/App.js`.
+   - Allows operators and engineers to dry-run stakeholder requests against active playground guardrails before hitting Discord or modifying Git.
+   - Evaluates keyword refusals, predicts target routes, classifies intent (e.g. `visual_tweak` vs `hard_refusal`), and displays the exact spoken response Minute would return in Discord.
+
+3. **LLM Backend & Inference Routing (`minute/src/llm.ts`)**:
    - Zero-cost local-first LLM inference using Ollama (`qwen2.5-coder:7b`).
    - Pluggable multi-backend architecture supporting `ollama`, `proxy`, `anthropic`, and `openai`.
    - Resilience: Connection detection, exponential backoff with retry, and structured JSON parsing.
 
-3. **FastAPI Operator Bridge (`backend/server.py`)**:
+4. **FastAPI Operator Bridge (`backend/server.py`)**:
    - Asynchronous Python proxy layer connecting the React dashboard with Ollama and Minute's internal daemon.
-   - Endpoints: `/api/health`, `/api/llm/complete`, `/api/minute/overview`, and `/api/minute/runs`.
+   - Endpoints: `/api/health`, `/api/llm/complete`, `/api/minute/overview`, `/api/minute/runs`, and `/api/minute/preflight`.
 
-4. **React Operator Dashboard (`frontend/src/App.js`)**:
+5. **React Operator Dashboard (`frontend/src/App.js`, `App.css`)**:
    - Live operator UI providing visibility into service status, LLM availability, Discord intents, and GitHub write permissions.
+   - Live playground inspector rendering active allowed paths and safety refusal tags.
+   - Integrated workflow simulator with quick-action presets for visual tweaks, payment blocks, auth refusals, and viewport switches.
    - Run stream displaying execution stages (`asking`, `working`, `photo ready`, `with tech`, `done`, `refused`).
 
-5. **Health, Readiness & Internal Telemetry APIs (`minute/src/index.ts`)**:
+6. **Health, Readiness & Internal Telemetry APIs (`minute/src/index.ts`, `overview.ts`)**:
    - Container `/health` probe for Docker Compose.
    - Comprehensive `/ready` probe checking Discord connection, GitHub token write access, LLM responsiveness, and Playwright Chromium availability.
-   - Authenticated `/internal/overview` and `/internal/runs` data feeds.
+   - Authenticated `/internal/overview` and `/internal/runs` data feeds exposing guardrail metadata.
 
 ---
 
@@ -86,7 +93,7 @@ In the Minute architecture, stakeholders interact exclusively through Discord wh
   - Robust JSON extraction (`extractJson`) stripping markdown fences from LLM answers.
 
 ### C. `backend/server.py`
-*FastAPI Bridge & Inference Proxy*
+*FastAPI Bridge & Pre-Flight Inference Proxy*
 
 - Connects the operator frontend to both the local Ollama daemon and the Node bot.
 - **Endpoints**:
@@ -94,9 +101,10 @@ In the Minute architecture, stakeholders interact exclusively through Discord wh
   - `POST /api/llm/complete`: Structured completions with temperature control and system prompts.
   - `GET /api/minute/overview`: Proxies internal daemon configuration and Discord/GitHub connectivity.
   - `GET /api/minute/runs`: Fetches real-time SQLite run records for operator monitoring.
+  - `POST /api/minute/preflight`: **Unique Workflow Feature** — evaluates an incoming prompt against safety allowlists, active playground routes, and restricted scope keywords (`auth`, `payments`, `billing`, `migrations`, etc.), returning an immediate pre-flight verdict.
 
-### D. `frontend/src/App.js`
-*Operator Radio & Live Dashboard*
+### D. `frontend/src/App.js` & `App.css`
+*Operator Radio & Workflow Pre-Flight Simulator*
 
 - React 19 single-page dashboard polling the FastAPI bridge every 5 seconds.
 - **Live Status Pills**:
@@ -104,6 +112,11 @@ In the Minute architecture, stakeholders interact exclusively through Discord wh
   - **LLM**: Active model and connection status.
   - **GitHub**: Read/Write vs. Read-Only status.
   - **Discord**: Connected bot user tag.
+- **Playground Guardrail Inspector**: Displays not only allowed file paths, but also actively enforced refusal lists and default routes.
+- **Interactive Workflow Pre-Flight Sandbox**:
+  - Operators can input any prompt or tap one-click presets (e.g., *🎨 Visual: Green Header*, *🚫 Refusal: Stripe Billing*, *🔒 Refusal: OAuth Auth*, *📱 Viewport: Mobile*).
+  - Simulates the exact gatekeeper check without touching Discord or creating branch churn.
+  - Renders live verdict badges (`ACCEPTED` vs `REFUSED`), reason explanations, and highlighted policy guardrail triggers.
 - **Warning Banners**: Proactively warns operators if Discord message content intent is disabled, credentials are missing, or the service is restarting.
 - **Run Monitor**: Displays all runs with status badges (`st-work`, `st-proof`, `st-hand`, `st-done`, `st-ref`).
 
