@@ -1,4 +1,4 @@
-# ⏰Minute
+# Minute
 
 <p>
   <b>Talk in Slack. See the change. Approve it. Let tech review the PR.</b>
