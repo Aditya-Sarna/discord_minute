@@ -73,7 +73,7 @@ You can also drop:
 
 ---
 
-## What problem does it solve?
+## What problem does it solve ?
 
 Minute removes the translation gap between someone with visual intent and an engineer reviewing code.
 
