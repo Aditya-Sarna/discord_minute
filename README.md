@@ -197,7 +197,7 @@ flowchart LR
 
 ### 1. Start a run
 
-Minute accepts a mention, `/minute` slash command, or an attachment.
+Minute accepts a mention, `/minute` slash command, or an attachment .
 
 ```text
 @Minute make the header forest green
